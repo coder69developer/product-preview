@@ -1,0 +1,19 @@
+<!-- <div class="color-grid">
+  <div
+    *ngFor="let color of colors"
+    class="color-box"
+    [style.backgroundColor]="color"
+    (click)="selectColor(color)"
+  ></div>
+</div> -->
+<!-- src/app/color-selector/color-selector.component.html -->
+<div class="color-selector-container">
+  <label for="colorPicker" class="color-label">Select a Color:</label>
+  <input
+    id="colorPicker"
+    type="color"
+    [value]="selectedColor"
+    (change)="onColorChange($event)"
+  />
+  <p>Selected Color: <span [style.color]="selectedColor">{{ selectedColor }}</span></p>
+</div>

@@ -1,0 +1,66 @@
+<div class="product-container container">
+  <div class="row">
+    <div class="col-12 col-mg-6 col-lg-6">
+      <div class="section">
+          <h2>choose color</h2>
+          <app-color-selector (colorSelected)="handleColorSelected($event)"></app-color-selector>
+      </div>
+
+      <div class="section mt-4">
+        <h2>Upload Logo</h2>
+        <form>
+          <div class="form-group">
+            <label for="logo">Upload Logo</label>
+            <input
+              type="file"
+              id="logo"
+              accept="image/*"
+              class="form-control"
+              (change)="onLogoUpload($event)"
+            />
+          </div>
+          <button type="submit" class="btn btn-primary mt-2">
+            Apply Logo
+          </button>
+        </form>
+      </div>
+
+      <div class="progress-bar-container">
+        <label for="textureProgress">Adjust Logo Wrap X</label>
+        <input
+          type="range"
+          id="textureProgress"
+          min="0"
+          max="100"
+          step="1"
+          [value]="progressX"
+          (change)="onProgressChangeX($event)"
+        />
+        <span>{{ progressX | number:'1.0-0' }}%</span>
+      </div>
+
+      <div class="progress-bar-container">
+        <label for="textureProgress">Adjust Logo Wrap Y</label>
+        <input
+          type="range"
+          id="textureProgress"
+          min="0"
+          max="100"
+          step="1"
+          [value]="progressY"
+          (change)="onProgressChangeY($event)"
+        />
+        <span>{{ progressY | number:'1.0-0' }}%</span>
+      </div>
+
+    </div>
+    <div class="col-12 col-md-6 col-lg-6">
+      <ngt-canvas [sceneGraph]="sceneGraph" [camera]="{ zoom: 1, position: [9, 4, 3]}"></ngt-canvas>
+
+
+
+    </div>
+  </div>
+
+
+</div>

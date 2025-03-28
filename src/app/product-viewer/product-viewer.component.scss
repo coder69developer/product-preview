@@ -1,0 +1,13 @@
+:host{
+  display: block;
+}
+
+.product-container{
+  height: 100vh;
+  margin: 30px auto;
+
+  .row{
+    margin-top: 20px;
+    height: inherit;
+  }
+}
