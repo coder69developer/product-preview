@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component } from '@angular/core';
 import * as THREE from 'three';
 import { ColorService } from '../color.service';
 import { Experience } from '../experience/experience.component';
@@ -8,12 +8,23 @@ import { Experience } from '../experience/experience.component';
   templateUrl: './product-viewer.component.html',
   styleUrl: './product-viewer.component.scss'
 })
-export class ProductViewerComponent {
+export class ProductViewerComponent implements AfterViewInit {
   sceneGraph = Experience;
-  progressX: number = 1;
-  progressY: number = 1;
+ decalSize = 0.7;
+ decalRotationDeg = 0;
+
+  // mouse = new THREE.Vector2();
+  // raycaster = new THREE.Raycaster();
+  logoTexture: THREE.Texture | null = null; // from upload
+  // modelMesh: THREE.Mesh | null = null; // will hold your GLTF mesh
+
 
   constructor(public colorService: ColorService){}
+
+
+  ngAfterViewInit(): void {
+    console.log('after view init');
+  }
 
   handleColorSelected(color: string){
     this.colorService.setColor(color);
@@ -31,30 +42,59 @@ export class ProductViewerComponent {
         const textureLoader = new THREE.TextureLoader();
 
 
-       const texture =  textureLoader.load(url, (texture) => {
+       this.logoTexture =  textureLoader.load(url, (texture) => {
           this.colorService.setLogo(texture);
         })
-
-
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        // texture.repeat.set(1,1);
       }
 
       reader.readAsDataURL(file);
     }
   }
 
-  onProgressChangeX(event: Event){
-    const input = event.target as HTMLInputElement;
-    this.progressX = parseFloat(input.value);
 
-    this.colorService.setLogoSizeX(parseFloat(input.value))
+  // onLogoUpload(event: Event) {
+  //   const input = event.target as HTMLInputElement;
+  //   const file = input?.files?.[0];
+
+  //   if (file) {
+  //     const reader = new FileReader();
+
+  //     reader.onload = () => {
+  //       const url = reader.result as string;
+  //       const loader = new THREE.TextureLoader();
+
+  //       loader.load(
+  //         url,
+  //         (texture) => {
+  //           texture.anisotropy = 16;
+  //           this.colorService.setLogo(texture);
+  //         },
+  //         undefined,
+  //         (err) => {
+  //           console.error('Error loading texture:', err);
+  //         }
+  //       );
+  //     };
+
+  //     reader.readAsDataURL(file);
+  //   }
+  // }
+
+
+  onSizeChange(event: Event) {
+    const size = +(event.target as HTMLInputElement).value;
+    this.decalSize = size;
+    this.colorService.updateDecalSettings(size, this.degToRad(this.decalRotationDeg));
   }
 
-  onProgressChangeY(event: Event){
-    const input = event.target as HTMLInputElement;
-    this.progressY = parseFloat(input.value);
-    this.colorService.setLogoSizeY(parseFloat(input.value))
+  onRotationChange(event: Event) {
+    const deg = +(event.target as HTMLInputElement).value;
+    this.decalRotationDeg = deg;
+    this.colorService.updateDecalSettings(this.decalSize, this.degToRad(deg));
   }
+
+  private degToRad(deg: number): number {
+    return (deg * Math.PI) / 180;
+  }
+
 }

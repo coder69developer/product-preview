@@ -7,8 +7,11 @@ import * as THREE from 'three';
 export class ColorService {
   private selectedColor = signal<string>('#ff0000');
   private uploadedLogo = signal<THREE.Texture | null>(null);
-  private progress = signal<number>(0.5);
-  private progressY = signal<number>(0.5);
+  decalSettings = signal({
+    position: new THREE.Vector3(0, 1.5, 1),
+    size: 0.7,
+    rotation: 0,
+  });
 
   get color(){
     return this.selectedColor();
@@ -27,19 +30,21 @@ export class ColorService {
     this.uploadedLogo.set(texture);
   }
 
-  get logoSizeX(){
-    return this.progress();
-  }
+    // Update size and rotation
+    updateDecalSettings(size: number, rotation: number) {
+      this.decalSettings.update(prev => ({
+        ...prev,
+        size,
+        rotation
+      }));
+    }
 
-  setLogoSizeX(value:number){
-    this.progress.set(value)
-  }
+    // Optional: Update position
+    updateDecalPosition(x: number, y: number, z: number) {
+      this.decalSettings.update(prev => ({
+        ...prev,
+        position: new THREE.Vector3(x, y, z)
+      }));
+    }
 
-  get logoSizeY(){
-    return this.progressY();
-  }
-
-  setLogoSizeY(value:number){
-    this.progressY.set(value)
-  }
 }
