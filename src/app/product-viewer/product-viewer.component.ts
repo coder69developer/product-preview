@@ -46,7 +46,6 @@ export class ProductViewerComponent implements AfterViewInit {
           this.colorService.setLogo(texture);
         })
       }
-
       reader.readAsDataURL(file);
     }
   }

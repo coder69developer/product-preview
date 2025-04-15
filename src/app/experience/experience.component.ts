@@ -5,7 +5,7 @@ import { Mesh, MeshStandardMaterial } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { ColorService } from '../color.service';
 
-import { DecalGeometry, OrbitControls } from 'three-stdlib';
+import { OrbitControls } from 'three-stdlib';
 extend(THREE);
 extend({OrbitControls});
 
@@ -41,73 +41,6 @@ export class Experience {
   orbitControls = viewChild<ElementRef<OrbitControls>>('orbitControls');
 
 
-  // model = computed(() => {
-  //   const gltf =  this.gltf();
-  //   if(!gltf) return null;
-
-  //   const color = this.colorService.color;
-  //   const logo = this.colorService.logo;
-
-  //   const mesh = gltf.scene.getObjectByName('Object_2') as Mesh;
-  //   const material = mesh.material as MeshStandardMaterial;
-
-  //   material.color.set(new Color(color));
-  //   this.modelMesh = mesh;
-  //   if(logo){
-  //     // material.map = logo;
-
-  //     // // Optional: Adjust the texture offset to fine-tune positioning (if needed)
-  //     //  material.map.offset.set(.001, 0); // Default position, change to move texture
-
-
-  //     const logoTexture = logo; // Assuming the logo is already loaded as a texture
-
-  //     // Set logo texture properties
-  //     // logoTexture.wrapS = THREE.ClampToEdgeWrapping;
-  //     // logoTexture.wrapT = THREE.ClampToEdgeWrapping;
-  //     // logoTexture.repeat.set(1, 1); // No repetition, adjust if needed
-  //     // logoTexture.offset.set(0, 0); // Centered by default
-
-
-  //     const position = new THREE.Vector3(0, 1, 1);
-  //     const orientation = new THREE.Euler(0, 0, 0); // Front
-  //     const size = new THREE.Vector3(0.7, 0.7, 0.2); // Width, height, depth
-  //     // Generate DecalGeometry
-  //     const decalGeometry = new DecalGeometry(mesh, position, orientation, size);
-
-
-  //     const decalMaterial = new THREE.MeshBasicMaterial({
-  //       map: logoTexture,
-  //       transparent: true, // Allows PNG transparency if your logo has it
-  //       // depthTest: true,
-  //       // depthWrite: false, // To properly overlay the decal
-  //       side: THREE.DoubleSide
-  //     });
-
-  //     const planeGeometry = new THREE.PlaneGeometry(2,2);
-
-  //     // const testMat = new THREE.MeshBasicMaterial({ map: logoTexture });
-  //     // const testPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), testMat);
-  //     // testPlane.position.set(0, 1, 1);
-  //     // gltf.scene.add(testPlane);
-
-  //     // Define decal size and position
-
-
-  //     // Add decal mesh to the scene
-  //     const decalMesh = new THREE.Mesh(planeGeometry, decalMaterial);
-
-  //     decalMesh.position.set(0,2,1);
-  //     decalMesh.rotation.set(0,0,0);
-  //     console.log('mesh applied', decalMesh)
-
-  //     gltf.scene.add(decalMesh);
-  //   }
-  //   console.log(gltf.scene);
-
-  //   return gltf.scene;
-  // })
-
   model = computed(() => {
     const gltf = this.gltf();
     if (!gltf) return null;
@@ -125,6 +58,8 @@ export class Experience {
       this.applyDecal(mesh, logo, settings);
     }
 
+
+    console.log(gltf.scene);
     return gltf.scene;
   })
 
@@ -148,6 +83,43 @@ export class Experience {
     });
 
   }
+
+  private applyDecal(
+    mesh: Mesh,
+    logoTexture: THREE.Texture,
+    settings: { position: THREE.Vector3; size: number; rotation: number }
+  ) {
+    // Clean up old mesh if it exists
+    if (this.currentDecalMesh) {
+      this.scene.remove(this.currentDecalMesh);
+      this.currentDecalMesh.geometry.dispose();
+      const material = this.currentDecalMesh.material;
+      Array.isArray(material) ? material.forEach(mat => mat.dispose()) : material.dispose();
+    }
+
+    // Set up cylindrical geometry slightly larger than bottle
+    const radius = 1.07; // Slightly larger than the bottle
+    const height = 1; // Adjust based on your bottle model's height
+    const radialSegments = 30;
+
+    const geometry = new THREE.CylinderGeometry(radius, radius, height, radialSegments, 1, true);
+    geometry.rotateY(Math.PI); // Rotate to show logo in front
+
+    const material = new THREE.MeshStandardMaterial({
+      map: logoTexture,
+      transparent: true,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+
+    const logoWrap = new THREE.Mesh(geometry, material);
+    logoWrap.position.copy(settings.position);
+    logoWrap.rotation.copy(mesh.rotation);
+
+    this.scene.add(logoWrap);
+    this.currentDecalMesh = logoWrap;
+  }
+
 
   // private applyDecal(
   //   mesh: Mesh,
@@ -185,75 +157,127 @@ export class Experience {
   //     this.currentDecalMesh = decalMesh;
   // }
 
-  private applyDecal(
-    mesh: Mesh, // The mesh (3D object) on which the decal (logo) is applied
-    logoTexture: THREE.Texture, // The texture (logo) to be applied
-    settings: { position: THREE.Vector3; size: number; rotation: number } // Decal settings (position, size, and rotation)
-  ) {
-    // Step 1: Clean up old decal if it exists
-    if (this.currentDecalMesh) {
-        // Remove the existing decal from the scene
-        this.scene.remove(this.currentDecalMesh);
+  // private applyDecal(
+  //   mesh: Mesh, // The mesh (3D object) on which the decal (logo) is applied
+  //   logoTexture: THREE.Texture, // The texture (logo) to be applied
+  //   settings: { position: THREE.Vector3; size: number; rotation: number } // Decal settings (position, size, and rotation)
+  // ) {
+  //   // Step 1: Clean up old decal if it exists
+  //   if (this.currentDecalMesh) {
+  //       // Remove the existing decal from the scene
+  //       this.scene.remove(this.currentDecalMesh);
 
-        // Dispose of the decal's geometry and material to free memory
-        this.currentDecalMesh.geometry.dispose();
-        const material = this.currentDecalMesh.material;
+  //       // Dispose of the decal's geometry and material to free memory
+  //       this.currentDecalMesh.geometry.dispose();
+  //       const material = this.currentDecalMesh.material;
 
-        // Dispose material(s) (handle both single and multiple materials)
-        if (Array.isArray(material)) {
-            material.forEach(mat => mat.dispose());
-        } else {
-            material.dispose();
-        }
-    }
+  //       // Dispose material(s) (handle both single and multiple materials)
+  //       if (Array.isArray(material)) {
+  //           material.forEach(mat => mat.dispose());
+  //       } else {
+  //           material.dispose();
+  //       }
+  //   }
 
-    // Step 2: Prepare the decal settings (orientation, size, and position)
-    const orientation = new THREE.Euler(0, 0, settings.rotation); // Rotation around the Z-axis for decal
-    const size = new THREE.Vector3(settings.size, settings.size, settings.size); // Size of the decal
+  //   // Step 2: Prepare the decal settings (orientation, size, and position)
+  //   const orientation = new THREE.Euler(0, Math.PI, settings.rotation); // Rotation around the Z-axis for decal
+  //   // const size = new THREE.Vector3(2,2, 1); // Size of the decal
 
-    // **Adjust position**: The decal will appear like a mirror view if the positioning is wrong.
-    // Here, we adjust the decal's position relative to the mesh. You may want to fine-tune the offset values.
+  //   // **Adjust position**: The decal will appear like a mirror view if the positioning is wrong.
+  //   // Here, we adjust the decal's position relative to the mesh. You may want to fine-tune the offset values.
 
-     // Step 3: Adjust the aspect ratio of the logo texture
-     const logoAspectRatio = logoTexture.image.width / logoTexture.image.height;
+  //    // Step 3: Adjust the aspect ratio of the logo texture
+  //    const logoAspectRatio = logoTexture.image.width / logoTexture.image.height;
 
-     // Adjust size to fit the aspect ratio of the logo texture
-     const adjustedSize = new THREE.Vector3(
-         settings.size * logoAspectRatio, // Adjust the X size based on the logo's aspect ratio
-         settings.size,                   // Keep Y size as it is
-         settings.size                    // Keep Z size as it is
-     );
+  //    // Adjust size to fit the aspect ratio of the logo texture
+  //    const adjustedSize = new THREE.Vector3(
+  //        settings.size * logoAspectRatio, // Adjust the X size based on the logo's aspect ratio
+  //        settings.size,                   // Keep Y size as it is
+  //        settings.size                    // Keep Z size as it is
+  //    );
 
-    const adjustedPosition = settings.position.clone(); // Clone the original position to avoid reference issues
+  //   const adjustedPosition = settings.position.clone(); // Clone the original position to avoid reference issues
 
-    // Fine-tune position to ensure proper alignment (adjust these offsets as needed)
-    // These adjustments help with making sure the decal is placed in a reasonable area of the mesh.
-    adjustedPosition.x += 0.0;  // Fine-tune position on X-axis
-    adjustedPosition.y -= 1.5;  // Fine-tune position on Y-axis (e.g., adjust decal vertically)
-    adjustedPosition.z += 0.05; // Move decal slightly forward on the Z-axis to avoid depth issues
+  //   // Fine-tune position to ensure proper alignment (adjust these offsets as needed)
+  //   // These adjustments help with making sure the decal is placed in a reasonable area of the mesh.
+  //   // adjustedPosition.x += 0.0;  // Fine-tune position on X-axis
+  //   adjustedPosition.y -= 0.5;  // Fine-tune position on Y-axis (e.g., adjust decal vertically)
+  //   adjustedPosition.z += 0.01; // Move decal slightly forward on the Z-axis to avoid depth issues
 
-    // Step 3: Create the decal geometry
-    const decalGeometry = new DecalGeometry(mesh, adjustedPosition, orientation, adjustedSize);
+  //   // Step 3: Create the decal geometry
+  //   const decalGeometry = new DecalGeometry(mesh, adjustedPosition, orientation, adjustedSize);
 
-    // Step 4: Create the material for the decal (using the logo texture)
-    const decalMaterial = new THREE.MeshStandardMaterial({
-        map: logoTexture, // Use the provided logo texture
-        transparent: false, // No transparency
-        depthTest: true, // Ensure the decal respects depth (don't overwrite mesh if behind)
-        depthWrite: false, // Don't write to depth buffer (helpful for overlaying decals)
-        polygonOffset: true, // Avoid z-fighting with the mesh
-        polygonOffsetFactor: -4, // Slightly move the decal back to avoid z-fighting
-    });
+  //   // Step 4: Create the material for the decal (using the logo texture)
+  //   const decalMaterial = new THREE.MeshStandardMaterial({
+  //       map: logoTexture, // Use the provided logo texture
+  //       transparent: false, // No transparency
+  //       depthTest: true, // Ensure the decal respects depth (don't overwrite mesh if behind)
+  //       depthWrite: false, // Don't write to depth buffer (helpful for overlaying decals)
+  //       polygonOffset: true, // Avoid z-fighting with the mesh
+  //       polygonOffsetFactor: -4, // Slightly move the decal back to avoid z-fighting
+  //   });
 
-    // Step 5: Create the decal mesh
-    const decalMesh = new THREE.Mesh(decalGeometry, decalMaterial);
+  //   // Step 5: Create the decal mesh
+  //   const decalMesh = new THREE.Mesh(decalGeometry, decalMaterial);
 
-    // Add the decal mesh to the scene
-    this.scene.add(decalMesh);
+  //   // Add the decal mesh to the scene
+  //   this.scene.add(decalMesh);
 
-    // Step 6: Store the current decal mesh for future removal/updates
-    this.currentDecalMesh = decalMesh;
-  }
+  //   // Step 6: Store the current decal mesh for future removal/updates
+  //   this.currentDecalMesh = decalMesh;
+  // }
+
+
+  // private applyDecal(
+  //   mesh: Mesh,
+  //   logoTexture: THREE.Texture,
+  //   settings: { position: THREE.Vector3; size: number; rotation: number }
+  // ) {
+  //   // Remove old decal
+  //   if (this.currentDecalMesh) {
+  //     this.scene.remove(this.currentDecalMesh);
+  //     this.currentDecalMesh.geometry.dispose();
+  //     const material = this.currentDecalMesh.material;
+  //     Array.isArray(material) ? material.forEach(mat => mat.dispose()) : material.dispose();
+  //   }
+
+  //   // 1. Face decal toward front of mesh (+Z)
+  //   const orientation = new THREE.Euler(0, Math.PI, settings.rotation);
+
+  //   // 2. Maintain logo's original aspect ratio
+  //   const logoAspectRatio = logoTexture.image.width / logoTexture.image.height;
+  //   const adjustedSize = new THREE.Vector3(
+  //     settings.size * logoAspectRatio,
+  //     settings.size,
+  //     settings.size
+  //   );
+
+  //   // 3. Set position slightly in front of bottle
+  //   const adjustedPosition = settings.position.clone();
+  //   // No need to fine-tune further if position is already set correctly in service
+
+  //   // 4. Create geometry and material
+  //   const decalGeometry = new DecalGeometry(mesh, adjustedPosition, orientation, adjustedSize);
+  //   const decalMaterial = new THREE.MeshStandardMaterial({
+  //     map: logoTexture,
+  //     transparent: true,
+  //     depthTest: true,
+  //     depthWrite: false,
+  //     polygonOffset: true,
+  //     polygonOffsetFactor: -4,
+  //   });
+
+  //   // 5. Create and add decal mesh
+  //   const decalMesh = new THREE.Mesh(decalGeometry, decalMaterial);
+  //   this.scene.add(decalMesh);
+  //   this.currentDecalMesh = decalMesh;
+
+  //   const helper = new THREE.AxesHelper(0.1);
+  //   helper.position.copy(adjustedPosition);
+  //   this.scene.add(helper);
+  // }
+
+
 
 }
 

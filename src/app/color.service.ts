@@ -8,8 +8,8 @@ export class ColorService {
   private selectedColor = signal<string>('#ff0000');
   private uploadedLogo = signal<THREE.Texture | null>(null);
   decalSettings = signal({
-    position: new THREE.Vector3(0, 1.5, 1),
-    size: 0.7,
+    position: new THREE.Vector3(1, 0, 0), // Front-facing and slightly off the surface
+    size: 1,
     rotation: 0,
   });
 
@@ -28,6 +28,7 @@ export class ColorService {
   setLogo(texture: THREE.Texture){
 
     this.uploadedLogo.set(texture);
+
   }
 
     // Update size and rotation
